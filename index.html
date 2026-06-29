@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Football AI Analytics</title>
+    <!-- Подключаем скрипт Telegram Web App (ОБЯЗАТЕЛЬНО) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Подключаем Tailwind CSS для быстрого и красивого дизайна -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS переменные будут автоматически брать цвета из темы Telegram пользователя */
+        body {
+            background-color: var(--tg-theme-bg-color, #1c1c1e);
+            color: var(--tg-theme-text-color, #ffffff);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overscroll-behavior: none; /* Убирает лишний скролл на iOS */
+        }
+        .card {
+            background-color: var(--tg-theme-secondary-bg-color, #2c2c2e);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .hint-color {
+            color: var(--tg-theme-hint-color, #8e8e93);
+        }
+        .btn-primary {
+            background-color: var(--tg-theme-button-color, #0a84ff);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            transition: opacity 0.2s;
+        }
+        .btn-primary:active {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <header class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">Матчи</h1>
+            <p class="hint-color text-sm" id="user-greeting">Загрузка...</p>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold" id="user-avatar">
+            AI
+        </div>
+    </header>
+
+    <main class="space-y-4" id="matches-container">
+        <!-- Карточка матча 1 -->
+        <div class="card p-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-semibold px-2 py-1 bg-green-500/20 text-green-500 rounded-lg">LIVE</span>
+                <span class="hint-color text-xs">75' мин</span>
+            </div>
+            <div class="flex justify-between items-center text-lg font-bold">
+                <span>Реал Мадрид</span>
+                <span class="text-2xl">2 : 1</span>
+                <span>Барселона</span>
+            </div>
+            <div class="mt-4 flex gap-2">
+                <button onclick="requestAiAnalysis(101, 'Реал Мадрид vs Барселона')" class="btn-primary flex-1 py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    AI Анализ
+                </button>
+            </div>
+        </div>
+
+        <!-- Карточка матча 2 -->
+        <div class="card p-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-semibold px-2 py-1 bg-blue-500/20 text-blue-500 rounded-lg">Сегодня, 22:00</span>
+            </div>
+            <div class="flex justify-between items-center text-lg font-bold">
+                <span>Ман. Сити</span>
+                <span class="hint-color">- : -</span>
+                <span>Ливерпуль</span>
+            </div>
+            <div class="mt-4 flex gap-2">
+                <button onclick="requestAiAnalysis(102, 'Ман. Сити vs Ливерпуль')" class="btn-primary flex-1 py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    AI Прогноз
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Инициализируем Telegram WebApp API
+        const tg = window.Telegram.WebApp;
+
+        // Расширяем приложение на весь экран (убирает верхнюю плашку)
+        tg.expand();
+        
+        // Сообщаем Telegram, что приложение готово к отображению
+        tg.ready();
+
+        // Получаем данные пользователя из Telegram (если запущен из самого мессенджера)
+        const user = tg.initDataUnsafe?.user;
+        
+        if (user) {
+            document.getElementById('user-greeting').innerText = `Привет, ${user.first_name}!`;
+            document.getElementById('user-avatar').innerText = user.first_name.charAt(0);
+        } else {
+            document.getElementById('user-greeting').innerText = 'Режим разработчика (Браузер)';
+        }
+
+        // Функция, которая вызывается при нажатии на кнопку "AI Анализ"
+        function requestAiAnalysis(matchId, matchName) {
+            // Включаем тактильную отдачу (вибрацию) на телефоне
+            tg.HapticFeedback.impactOccurred('light');
+
+            // Формируем данные для отправки в нашего Python-бота
+            const dataToSend = JSON.stringify({
+                action: "analyze_match",
+                match_id: matchId,
+                match_name: matchName
+            });
+
+            // Отправляем данные обратно в бота и автоматически закрываем WebApp
+            // В Python это триггернет событие content_types=['web_app_data']
+            tg.sendData(dataToSend);
+        }
+    </script>
+</body>
+</html>
